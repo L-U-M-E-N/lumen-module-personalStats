@@ -53,13 +53,13 @@ class PersonalStats {
 	static archiveStats() {
 		const lastDate = new Date(parseInt(localStorage.lastLaunch)).toDateString();
 
-		if(localStorage.lastLaunch === undefined || // Never used
-			(new Date()).toDateString() !== lastDate) { // Another day
+		let history = {};
+		if(localStorage.history !== undefined) {
+			history = JSON.parse(localStorage.history);
+		}
 
-			let history = {};
-			if(localStorage.history !== undefined) {
-				history = JSON.parse(localStorage.history);
-			}
+		if(localStorage.lastLaunch !== undefined && // Never used
+			(new Date()).toDateString() !== lastDate) { // Another day
 
 			history[lastDate] = {};
 
@@ -67,10 +67,9 @@ class PersonalStats {
 				history[lastDate][type] = localStorage['PersonalStats_' + type];
 				localStorage['PersonalStats_' + type] = 0;
 			}
-
-			localStorage.history = JSON.stringify(history);
 		}
 
+		localStorage.history = JSON.stringify(history);
 		localStorage.lastLaunch = Date.now();
 	}
 
@@ -161,8 +160,13 @@ class PersonalStats {
 
 			for(const type in typeList) {
 				if(typeList[type]) {
-					totalTimes[duration] += PersonalStats.historyStats[type][duration]
-							+ parseInt(localStorage['PersonalStats_' + type]);
+					if(PersonalStats.historyStats[type] && PersonalStats.historyStats[type][duration]) {
+						totalTimes[duration] += PersonalStats.historyStats[type][duration];
+					}
+
+					if(localStorage['PersonalStats_' + type]) {
+						totalTimes[duration] += parseInt(localStorage['PersonalStats_' + type]);
+					}
 				}
 			}
 		}
@@ -170,7 +174,11 @@ class PersonalStats {
 		for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
 			for(const duration in PersonalStats.DURATIONS) {
 				const currTypeVal = PersonalStats.historyStats[type][duration] + parseInt(localStorage['PersonalStats_' + type]);
-				const ratioVal = Math.round(1000 * currTypeVal / totalTimes[duration])/10;
+				let ratioVal = Math.round(1000 * currTypeVal / totalTimes[duration])/10;
+
+				if(Number.isNaN(ratioVal)) {
+					ratioVal = 0;
+				}
 
 				document.getElementById('module-personalStats-' + type + '-' + duration + '-percentage').innerText = ratioVal + '%';
 			}
