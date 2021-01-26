@@ -97,7 +97,7 @@ class PersonalStats {
 				for(const duration in PersonalStats.DURATIONS) {
 					if(new Date(i).getTime() >= durationPeriods[duration].getTime()) {
 						for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
-							PersonalStats.historyStats[type][duration] += (history[i][type] || 0);
+							PersonalStats.historyStats[type][duration] += parseInt((history[i][type] || 0));
 						}
 					}
 				}
