@@ -4,7 +4,9 @@ const calendarTypes = {
 class PersonalStats {
 	static PLAYING_BUTTON = '&#x25b7;';
 	static PLAY_BUTTON = '&#9654;';
-	static CURRENT_CATEGORY = 'Other';
+	static DEFAULT_CURRENT_CATEGORY = 'Other';
+	static CURRENT_CATEGORY = '';
+	static MINOR_CATEGORIES = [];
 	static DEFAULT_CATEGORIES = {...calendarTypes, 'Other': true };
 	static DURATIONS = { 'Day': 1, 'Week': 7, 'Month': 30 };
 
@@ -43,7 +45,7 @@ class PersonalStats {
 			table.appendChild(tr);
 		}
 
-		PersonalStats.switchCategory(PersonalStats.CURRENT_CATEGORY);
+		PersonalStats.switchCategory(PersonalStats.DEFAULT_CURRENT_CATEGORY);
 
 		PersonalStats.initBackgroundProcess();
 	}
@@ -109,10 +111,30 @@ class PersonalStats {
 	}
 
 	static switchCategory(newType) {
-		PersonalStats.CURRENT_CATEGORY = newType;
+		const typeList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
 
+		// Desactivate current "major" activity
+		if(PersonalStats.CURRENT_CATEGORY === newType) {
+			PersonalStats.CURRENT_CATEGORY = '';
+		} else {
+			// Activate current "major" activity
+			if(typeList[newType]) {
+				PersonalStats.CURRENT_CATEGORY = newType;
+			} else {
+				if(PersonalStats.MINOR_CATEGORIES.includes(newType)) {
+					// Desactivate "minor" activity
+					PersonalStats.MINOR_CATEGORIES = PersonalStats.MINOR_CATEGORIES.filter((elt) => elt !== newType);
+				} else {
+					// Activate "minor" activity
+					PersonalStats.MINOR_CATEGORIES.push(newType);
+				}
+			}
+		}
+
+		// Display buttons
 		for(const elt of document.getElementsByClassName('module-personalStats-button')) {
-			if(elt.getAttribute('category') === PersonalStats.CURRENT_CATEGORY) {
+			const category = elt.getAttribute('category');
+			if(category === PersonalStats.CURRENT_CATEGORY || PersonalStats.MINOR_CATEGORIES.includes(category)) {
 				elt.innerHTML = PersonalStats.PLAYING_BUTTON;
 			} else {
 				elt.innerHTML = PersonalStats.PLAY_BUTTON;
@@ -121,8 +143,17 @@ class PersonalStats {
 	}
 
 	static updateFigures() {
-		localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = parseInt(localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
-		
+		// Increment for major activity
+		if(PersonalStats.CURRENT_CATEGORY !== '') {
+			localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = parseInt(localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
+		}
+
+		// Increment for minor activities
+		for(const activity of PersonalStats.MINOR_CATEGORIES) {
+			localStorage['PersonalStats_' + activity] = parseInt(localStorage['PersonalStats_' + activity] || 0) + 1;
+		}
+
+		// Compute total times
 		let totalTimes = {};
 		const typeList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
 		for(const duration in PersonalStats.DURATIONS) {
