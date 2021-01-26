@@ -85,7 +85,7 @@ class PersonalStats {
 				PersonalStats.historyStats[type][duration] = parseInt(localStorage['PersonalStats_' + type] || 0);
 
 				durationPeriods[duration] = new Date();
-				durationPeriods[duration].setDate(durationPeriods[duration].getDate() - PersonalStats.DURATIONS[duration]);
+				durationPeriods[duration].setDate(durationPeriods[duration].getDate() - (PersonalStats.DURATIONS[duration] - 1)); // Duration must be -1 because we use midnight as basis of calculation
 				durationPeriods[duration].setHours(0, 0, 0, 0);
 			}
 		}
