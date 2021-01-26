@@ -1,0 +1,9 @@
+#module-personalStats-table {
+	width: 100%;
+	user-select: none;
+	table-layout: fixed;
+}
+
+.module-personalStats-button {
+	cursor: pointer;
+}
