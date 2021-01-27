@@ -7,3 +7,7 @@
 .module-personalStats-button {
 	cursor: pointer;
 }
+
+#module-personalStats-table th {
+	text-align: left;
+}

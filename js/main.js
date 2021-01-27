@@ -19,30 +19,49 @@ class PersonalStats {
 		}
 
 		// Write table
-		for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
-			const tr = document.createElement('tr');
+		const typesList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
+		for(const type in typesList) {
+			const trFirstLine = document.createElement('tr');
+			const trSecondLine = document.createElement('tr');
 
 			const tdName = document.createElement('td');
 			tdName.innerText = type;
-			tr.appendChild(tdName);
+			tdName.setAttribute('rowspan', 2);
+			tdName.style.fontWeight = typesList[type] ? 'bold' : '';
+			trFirstLine.appendChild(tdName);
 
 			const tdButton = document.createElement('td');
 			tdButton.classList = 'module-personalStats-button';
 			tdButton.setAttribute('category', type);
+			tdButton.setAttribute('rowspan', 2);
 			tdButton.addEventListener('click', () => {
 				PersonalStats.switchCategory(type);
 			});
-			tr.appendChild(tdButton);
+			trFirstLine.appendChild(tdButton);
 
 			for(const duration in PersonalStats.DURATIONS) {
-				const td = document.createElement('td');
-				td.id = 'module-personalStats-' + type + '-' + duration + '-percentage';
-				td.innerText = '?%';
+				const tdPercentage = document.createElement('td');
+				tdPercentage.id = 'module-personalStats-' + type + '-' + duration + '-percentage';
+				tdPercentage.innerText = '?%';
 
-				tr.appendChild(td);
+				trFirstLine.appendChild(tdPercentage);
+
+				const tdTime = document.createElement('td');
+				tdTime.id = 'module-personalStats-' + type + '-' + duration + '-time';
+				tdTime.innerText = '??:??:??';
+
+				trSecondLine.appendChild(tdTime);
 			}
 
-			table.appendChild(tr);
+			table.appendChild(trFirstLine);
+			table.appendChild(trSecondLine);
+
+			const emptyLine = document.createElement('tr');
+			const emptyCell = document.createElement('td');
+			emptyCell.setAttribute('colspan', 5);
+			emptyCell.innerHTML = '&nbsp;'
+			emptyLine.appendChild(emptyCell);
+			table.appendChild(emptyLine);
 		}
 
 		PersonalStats.switchCategory(PersonalStats.DEFAULT_CURRENT_CATEGORY);
@@ -141,6 +160,10 @@ class PersonalStats {
 		}
 	}
 
+	static formatTime(duration) {
+		return Math.floor(duration / 3600).toString().padStart(2, '0') + ':' + Math.floor((duration%3600) / 60).toString().padStart(2, '0') + ':' + (duration%60).toString().padStart(2, '0');
+	}
+
 	static updateFigures() {
 		// Increment for major activity
 		if(PersonalStats.CURRENT_CATEGORY !== '') {
@@ -171,16 +194,21 @@ class PersonalStats {
 			}
 		}
 
-		for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
+		const typesList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
+		for(const type in typesList) {
 			for(const duration in PersonalStats.DURATIONS) {
-				const currTypeVal = PersonalStats.historyStats[type][duration] + parseInt(localStorage['PersonalStats_' + type]);
-				let ratioVal = Math.round(1000 * currTypeVal / totalTimes[duration])/10;
+				let currTypeVal = PersonalStats.historyStats[type][duration] + parseInt(localStorage['PersonalStats_' + type]);
+				if(Number.isNaN(currTypeVal)) {
+					currTypeVal = PersonalStats.historyStats[type][duration] || 0;
+				}
 
+				let ratioVal = Math.round(1000 * currTypeVal / totalTimes[duration])/10;
 				if(Number.isNaN(ratioVal)) {
 					ratioVal = 0;
 				}
 
-				document.getElementById('module-personalStats-' + type + '-' + duration + '-percentage').innerText = ratioVal + '%';
+				document.getElementById('module-personalStats-' + type + '-' + duration + '-percentage').innerText = typesList[type] ? ratioVal + '%' : '';
+				document.getElementById('module-personalStats-' + type + '-' + duration + '-time').innerText = PersonalStats.formatTime(currTypeVal);
 			}
 		}
 	}
