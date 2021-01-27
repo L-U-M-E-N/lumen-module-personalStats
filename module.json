@@ -6,10 +6,10 @@
 	"dependencies": {},
 	"desktop": {
 		"module": true,
-		"window": false,
+		"window": false
 	},
 	"mobile": {
 		"module": false,
-		"window": false,
+		"window": false
 	}
 }
