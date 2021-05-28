@@ -1,6 +1,8 @@
 const calendarTypes = {
 };
 
+let localData = {};
+
 class PersonalStats {
 	static PLAYING_BUTTON = '&#x25b7;';
 	static PLAY_BUTTON = '&#9654;';
@@ -12,6 +14,10 @@ class PersonalStats {
 
 	static init() {
 		const table = document.getElementById('module-personalStats-tbody');
+
+		if(AppDataManager.exists('personalStats', 'localData')) {
+			localData = AppDataManager.loadObject('personalStats', 'localData');
+		}
 
 		// Clean table
 		while(table.firstChild) {
@@ -70,26 +76,26 @@ class PersonalStats {
 	}
 
 	static archiveStats() {
-		const lastDate = new Date(parseInt(localStorage.lastLaunch)).toDateString();
+		const lastDate = new Date(localData.lastLaunch).toDateString();
 
-		let history = {};
-		if(localStorage.history !== undefined) {
-			history = JSON.parse(localStorage.history);
+		if(localData.history !== undefined) {
+			localData.history = {};
 		}
 
-		if(localStorage.lastLaunch !== undefined && // Never used
+		if(localData.lastLaunch !== undefined && // Never used
 			(new Date()).toDateString() !== lastDate) { // Another day
 
-			history[lastDate] = {};
+			localData.history[lastDate] = {};
 
 			for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
-				history[lastDate][type] = localStorage['PersonalStats_' + type];
-				localStorage['PersonalStats_' + type] = 0;
+				localData.history[lastDate][type] = localData['PersonalStats_' + type];
+				localData['PersonalStats_' + type] = 0;
 			}
 		}
 
-		localStorage.history = JSON.stringify(history);
-		localStorage.lastLaunch = Date.now();
+		localData.lastLaunch = Date.now();
+
+		AppDataManager.saveObject('personalStats', 'localData', localData);
 	}
 
 	static initBackgroundProcess() {
@@ -102,7 +108,7 @@ class PersonalStats {
 			PersonalStats.historyStats[type] = {};
 
 			for(const duration in PersonalStats.DURATIONS) {
-				PersonalStats.historyStats[type][duration] = parseInt(localStorage['PersonalStats_' + type] || 0);
+				PersonalStats.historyStats[type][duration] = 0;
 
 				durationPeriods[duration] = new Date();
 				durationPeriods[duration].setDate(durationPeriods[duration].getDate() - (PersonalStats.DURATIONS[duration] - 1)); // Duration must be -1 because we use midnight as basis of calculation
@@ -110,14 +116,12 @@ class PersonalStats {
 			}
 		}
 
-		if(localStorage.history !== undefined) {
-			const history = JSON.parse(localStorage.history);
-
-			for(const i in history) {
+		if(localData.history !== undefined) {
+			for(const i in localData.history) {
 				for(const duration in PersonalStats.DURATIONS) {
 					if(new Date(i).getTime() >= durationPeriods[duration].getTime()) {
 						for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
-							PersonalStats.historyStats[type][duration] += parseInt((history[i][type] || 0));
+							PersonalStats.historyStats[type][duration] += (localData.history[i][type] || 0);
 						}
 					}
 				}
@@ -167,12 +171,12 @@ class PersonalStats {
 	static updateFigures() {
 		// Increment for major activity
 		if(PersonalStats.CURRENT_CATEGORY !== '') {
-			localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = parseInt(localStorage['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
+			localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = (localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
 		}
 
 		// Increment for minor activities
 		for(const activity of PersonalStats.MINOR_CATEGORIES) {
-			localStorage['PersonalStats_' + activity] = parseInt(localStorage['PersonalStats_' + activity] || 0) + 1;
+			localData['PersonalStats_' + activity] = (localData['PersonalStats_' + activity] || 0) + 1;
 		}
 
 		// Compute total times
@@ -187,8 +191,8 @@ class PersonalStats {
 						totalTimes[duration] += PersonalStats.historyStats[type][duration];
 					}
 
-					if(localStorage['PersonalStats_' + type]) {
-						totalTimes[duration] += parseInt(localStorage['PersonalStats_' + type]);
+					if(localData['PersonalStats_' + type]) {
+						totalTimes[duration] += localData['PersonalStats_' + type];
 					}
 				}
 			}
@@ -197,7 +201,7 @@ class PersonalStats {
 		const typesList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
 		for(const type in typesList) {
 			for(const duration in PersonalStats.DURATIONS) {
-				let currTypeVal = PersonalStats.historyStats[type][duration] + parseInt(localStorage['PersonalStats_' + type]);
+				let currTypeVal = PersonalStats.historyStats[type][duration] + localData['PersonalStats_' + type];
 				if(Number.isNaN(currTypeVal)) {
 					currTypeVal = PersonalStats.historyStats[type][duration] || 0;
 				}
@@ -211,6 +215,8 @@ class PersonalStats {
 				document.getElementById('module-personalStats-' + type + '-' + duration + '-time').innerText = PersonalStats.formatTime(currTypeVal);
 			}
 		}
+
+		AppDataManager.saveObject('personalStats', 'localData', localData);
 	}
 }
 
