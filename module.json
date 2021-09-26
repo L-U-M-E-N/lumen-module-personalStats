@@ -11,5 +11,8 @@
 	"mobile": {
 		"module": false,
 		"window": false
-	}
+	},
+    "config": {
+        "urls": "objects[]"
+    }
 }
