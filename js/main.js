@@ -12,11 +12,11 @@ class PersonalStats {
 	static DEFAULT_CATEGORIES = {...calendarTypes, 'Other': true };
 	static DURATIONS = { 'Day': 1, 'Week': 7, 'Month': 30 };
 
-	static init() {
+	static async init() {
 		const table = document.getElementById('module-personalStats-tbody');
 
-		if(AppDataManager.exists('personalStats', 'localData')) {
-			localData = AppDataManager.loadObject('personalStats', 'localData');
+		if(await AppDataManager.exists('personalStats', 'localData')) {
+			localData = await AppDataManager.loadObject('personalStats', 'localData');
 		}
 
 		// Clean table
@@ -72,10 +72,10 @@ class PersonalStats {
 
 		PersonalStats.switchCategory(PersonalStats.DEFAULT_CURRENT_CATEGORY);
 
-		PersonalStats.initBackgroundProcess();
+		await PersonalStats.initBackgroundProcess();
 	}
 
-	static archiveStats() {
+	static async archiveStats() {
 		const lastDate = new Date(localData.lastLaunch).toDateString();
 
 		if(localData.history === undefined) {
@@ -95,11 +95,11 @@ class PersonalStats {
 
 		localData.lastLaunch = Date.now();
 
-		AppDataManager.saveObject('personalStats', 'localData', localData);
+		await AppDataManager.saveObject('personalStats', 'localData', localData);
 	}
 
-	static initBackgroundProcess() {
-		PersonalStats.archiveStats();
+	static async initBackgroundProcess() {
+		await PersonalStats.archiveStats();
 
 		// Initialize stats
 		PersonalStats.historyStats = {};
@@ -168,7 +168,7 @@ class PersonalStats {
 		return Math.floor(duration / 3600).toString().padStart(2, '0') + ':' + Math.floor((duration%3600) / 60).toString().padStart(2, '0') + ':' + (duration%60).toString().padStart(2, '0');
 	}
 
-	static updateFigures() {
+	static async updateFigures() {
 		// Increment for major activity
 		if(PersonalStats.CURRENT_CATEGORY !== '') {
 			localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = (localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
@@ -216,7 +216,7 @@ class PersonalStats {
 			}
 		}
 
-		AppDataManager.saveObject('personalStats', 'localData', localData);
+		await AppDataManager.saveObject('personalStats', 'localData', localData);
 	}
 }
 
