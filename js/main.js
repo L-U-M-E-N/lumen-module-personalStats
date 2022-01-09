@@ -168,6 +168,19 @@ class PersonalStats {
 		return Math.floor(duration / 3600).toString().padStart(2, '0') + ':' + Math.floor((duration%3600) / 60).toString().padStart(2, '0') + ':' + (duration%60).toString().padStart(2, '0');
 	}
 
+	static logEveryHistory(type) {
+		let acc = {};
+
+		for(let date = (new Date('2018-01-01')).getTime(); date < Date.now(); date += 24 * 60 * 60 * 1000) {
+			const strDate = (new Date(date)).toDateString();
+
+			const activities = localData.history[strDate];
+			if(activities && activities[type]) {
+				console.log(strDate, PersonalStats.formatTime(activities[type]));
+			}
+		}
+	}
+
 	static async updateFigures() {
 		// Increment for major activity
 		if(PersonalStats.CURRENT_CATEGORY !== '') {
