@@ -1,6 +1,6 @@
 {
 	"name": "personalStats",
-	"fullName": "ersonal Stats Module",
+	"fullName": "Personal Stats Module",
 	"author": "Elanis",
 	"version": "1.0.0",
 	"dependencies": {},
@@ -13,6 +13,6 @@
 		"window": false
 	},
     "config": {
-        "urls": "objects[]"
+        "activities": "object"
     }
 }

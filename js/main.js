@@ -1,6 +1,3 @@
-const calendarTypes = {
-};
-
 let localData = {};
 
 class PersonalStats {
@@ -9,8 +6,15 @@ class PersonalStats {
 	static DEFAULT_CURRENT_CATEGORY = 'Other';
 	static CURRENT_CATEGORY = '';
 	static MINOR_CATEGORIES = [];
-	static DEFAULT_CATEGORIES = {...calendarTypes, 'Other': true };
+	static DEFAULT_CATEGORIES = { 'Other': true };
 	static DURATIONS = { 'Day': 1, 'Week': 7, 'Month': 30 };
+
+	static async getActivitiesList() {
+		return {
+			...PersonalStats.DEFAULT_CATEGORIES, 
+			...(await ConfigManager.get('personalStats', 'activities'))
+		};
+	}
 
 	static async init() {
 		const table = document.getElementById('module-personalStats-tbody');
@@ -25,7 +29,7 @@ class PersonalStats {
 		}
 
 		// Write table
-		const typesList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
+		const typesList = await PersonalStats.getActivitiesList();
 		for(const type in typesList) {
 			const trFirstLine = document.createElement('tr');
 			const trSecondLine = document.createElement('tr');
@@ -40,9 +44,7 @@ class PersonalStats {
 			tdButton.classList = 'module-personalStats-button';
 			tdButton.setAttribute('category', type);
 			tdButton.setAttribute('rowspan', 2);
-			tdButton.addEventListener('click', () => {
-				PersonalStats.switchCategory(type);
-			});
+			tdButton.addEventListener('click', () => PersonalStats.switchCategory(type));
 			trFirstLine.appendChild(tdButton);
 
 			for(const duration in PersonalStats.DURATIONS) {
@@ -70,7 +72,7 @@ class PersonalStats {
 			table.appendChild(emptyLine);
 		}
 
-		PersonalStats.switchCategory(PersonalStats.DEFAULT_CURRENT_CATEGORY);
+		await PersonalStats.switchCategory(PersonalStats.DEFAULT_CURRENT_CATEGORY);
 
 		await PersonalStats.initBackgroundProcess();
 	}
@@ -87,7 +89,7 @@ class PersonalStats {
 
 			localData.history[lastDate] = {};
 
-			for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
+			for(const type in await PersonalStats.getActivitiesList()) {
 				localData.history[lastDate][type] = localData['PersonalStats_' + type];
 				localData['PersonalStats_' + type] = 0;
 			}
@@ -101,10 +103,12 @@ class PersonalStats {
 	static async initBackgroundProcess() {
 		await PersonalStats.archiveStats();
 
+		const typesList = await PersonalStats.getActivitiesList();
+
 		// Initialize stats
 		PersonalStats.historyStats = {};
 		const durationPeriods = {};
-		for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
+		for(const type in typesList) {
 			PersonalStats.historyStats[type] = {};
 
 			for(const duration in PersonalStats.DURATIONS) {
@@ -120,7 +124,7 @@ class PersonalStats {
 			for(const i in localData.history) {
 				for(const duration in PersonalStats.DURATIONS) {
 					if(new Date(i).getTime() >= durationPeriods[duration].getTime()) {
-						for(const type in {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes }) {
+						for(const type in typesList) {
 							PersonalStats.historyStats[type][duration] += (parseInt(localData.history[i][type], 10) || 0);
 						}
 					}
@@ -132,15 +136,15 @@ class PersonalStats {
 		PersonalStats.updateFiguresInterval = setInterval(PersonalStats.updateFigures, 1000);
 	}
 
-	static switchCategory(newType) {
-		const typeList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
+	static async switchCategory(newType) {
+		const typesList = await PersonalStats.getActivitiesList();
 
 		// Desactivate current "major" activity
 		if(PersonalStats.CURRENT_CATEGORY === newType) {
 			PersonalStats.CURRENT_CATEGORY = '';
 		} else {
 			// Activate current "major" activity
-			if(typeList[newType]) {
+			if(typesList[newType]) {
 				PersonalStats.CURRENT_CATEGORY = newType;
 			} else {
 				if(PersonalStats.MINOR_CATEGORIES.includes(newType)) {
@@ -182,6 +186,8 @@ class PersonalStats {
 	}
 
 	static async updateFigures() {
+		const typesList = await PersonalStats.getActivitiesList();
+
 		// Increment for major activity
 		if(PersonalStats.CURRENT_CATEGORY !== '') {
 			localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] = (localData['PersonalStats_' + PersonalStats.CURRENT_CATEGORY] || 0) + 1;
@@ -194,12 +200,11 @@ class PersonalStats {
 
 		// Compute total times
 		let totalTimes = {};
-		const typeList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
 		for(const duration in PersonalStats.DURATIONS) {
 			totalTimes[duration] = 0;
 
-			for(const type in typeList) {
-				if(typeList[type]) {
+			for(const type in typesList) {
+				if(typesList[type]) {
 					if(PersonalStats.historyStats[type] && PersonalStats.historyStats[type][duration]) {
 						totalTimes[duration] += PersonalStats.historyStats[type][duration];
 					}
@@ -211,7 +216,6 @@ class PersonalStats {
 			}
 		}
 
-		const typesList = {...PersonalStats.DEFAULT_CATEGORIES, ...calendarTypes };
 		for(const type in typesList) {
 			for(const duration in PersonalStats.DURATIONS) {
 				let currTypeVal = PersonalStats.historyStats[type][duration] + localData['PersonalStats_' + type];
