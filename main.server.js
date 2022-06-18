@@ -2,77 +2,91 @@ import fs from 'fs';
 import { MessageActionRow, MessageButton } from 'discord.js';
 
 export default class PersonalStats {
-	static sleepStart = null;
+	static activitiesStart = {};
 
 	static init() {
-		Discord.registerCmd(
-			'sleep',
-			PersonalStats.startSleep,
-			{
-				description: 'Start sleeping now !',
+		const activities = JSON.parse(JSON.stringify(config.activities));
+		activities['Sleep'] = true;
+
+		for(const activity in activities) {
+			if(!activities[activity]) {
+				continue;
 			}
-		);
+			const lowerActivity = activity.toLowerCase();
 
-		Discord.registerBtn(
-			'sleep-restart',
-			PersonalStats.restartSleep
-		);
+			console.log(lowerActivity);
 
-		Discord.registerBtn(
-			'sleep-end',
-			PersonalStats.endSleep
-		);
+			Discord.registerCmd(
+				lowerActivity,
+				(c, i) => PersonalStats.startActivity(activity, c, i),
+				{
+					description: `Start ${activity} now !`,
+				}
+			);
+
+			Discord.registerBtn(
+				lowerActivity + '-restart',
+				(c, i) => PersonalStats.restartActivity(activity, c, i),
+			);
+
+			Discord.registerBtn(
+				lowerActivity + '-end',
+				(c, i) => PersonalStats.endActivity(activity, c, i),
+			);
+		}
 	}
 
 	static close() {
 	}
 
-	static restartSleep(discordClient, interaction) {
-		PersonalStats.startSleep(discordClient, interaction, true);
+	static restartActivity(activity, discordClient, interaction) {
+		PersonalStats.startActivity(activity, discordClient, interaction, true);
 	}
 
-	static startSleep(discordClient, interaction, restarted = false) {
+	static startActivity(activity, discordClient, interaction, restarted = false) {
+		const lowerActivity = activity.toLowerCase();
+
 		const row = new MessageActionRow()
 			.addComponents(
 				new MessageButton()
-					.setCustomId('sleep-restart')
+					.setCustomId(lowerActivity + '-restart')
 					.setLabel('Restart')
 					.setStyle('DANGER'),
 			)
 			.addComponents(
 				new MessageButton()
-					.setCustomId('sleep-end')
-					.setLabel('End sleep')
+					.setCustomId(lowerActivity + '-end')
+					.setLabel('End ' + activity)
 					.setStyle('PRIMARY'),
 			);
 
-		PersonalStats.sleepStart = new Date();
+		PersonalStats.activitiesStart[activity] = new Date();
 
 		const verb = restarted ? 'Restarted' : 'Started';
 
 		interaction.reply({
-			content: `${verb} at ${PersonalStats.sleepStart.toLocaleTimeString(config.locale)}`,
+			content: `${verb} at ${PersonalStats.activitiesStart[activity].toLocaleTimeString(config.locale)}`,
 			components: [row],
 			ephemeral: true
 		})
 	}
 
-	static endSleep(discordClient, interaction) {
-		if(!PersonalStats.sleepStart) {
+	static endActivity(activity, discordClient, interaction) {
+		if(!PersonalStats.activitiesStart[activity]) {
 			interaction.reply({
-				content: 'Error: you didn\'t start to sleep !',
+				content: `Error: you didn't start to ${activity} !`,
 				ephemeral: true
 			})
 		}
 
-		const sleepEnd = new Date();
+		const activityEnd = new Date();
 
 		const [query, values] = Database.buildInsertQuery('calendar', {
-			id: `SLEEP-${PersonalStats.sleepStart.toISOString()}`,
-			title: 'Sleep',
+			id: `${activity.toUpperCase()}-${PersonalStats.activitiesStart[activity].toISOString()}`,
+			title: activity,
 			description: '',
-			start: PersonalStats.sleepStart,
-			end: sleepEnd,
+			start: PersonalStats.activitiesStart[activity],
+			end: activityEnd,
 			origin: 'Lumen Discord Bot'
 		});
 
@@ -82,9 +96,9 @@ export default class PersonalStats {
 		);
 
 		interaction.reply({
-			content: `Slept from ${PersonalStats.sleepStart.toLocaleTimeString(config.locale)} from ${sleepEnd.toLocaleTimeString(config.locale)} !`,
+			content: `Did "${activity}" from ${PersonalStats.activitiesStart[activity].toLocaleTimeString(config.locale)} from ${activityEnd.toLocaleTimeString(config.locale)} !`,
 			ephemeral: true
 		});
-		PersonalStats.sleepStart = null;
+		PersonalStats.activitiesStart[activity] = null;
 	}
 }
