@@ -24,6 +24,14 @@ export default class PersonalStats {
 				}
 			);
 
+			Discord.registerCmd(
+				'stop' + lowerActivity,
+				(c, i) => PersonalStats.endActivity(activity, c, i),
+				{
+					description: `Stops ${activity} now.`,
+				}
+			);
+
 			Discord.registerBtn(
 				lowerActivity + '-restart',
 				(c, i) => PersonalStats.restartActivity(activity, c, i),
