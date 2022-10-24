@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { ActionRowBuilder, ButtonBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle  } from 'discord.js';
 
 export default class PersonalStats {
 	static activitiesStart = {};
@@ -59,13 +59,13 @@ export default class PersonalStats {
 				new ButtonBuilder()
 					.setCustomId(lowerActivity + '-restart')
 					.setLabel('Restart')
-					.setStyle('DANGER'),
+					.setStyle(ButtonStyle.Danger),
 			)
 			.addComponents(
 				new ButtonBuilder()
 					.setCustomId(lowerActivity + '-end')
 					.setLabel('End ' + activity)
-					.setStyle('PRIMARY'),
+					.setStyle(ButtonStyle.Primary),
 			);
 
 		PersonalStats.activitiesStart[activity] = new Date();
