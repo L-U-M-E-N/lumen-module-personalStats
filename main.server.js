@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { MessageActionRow, MessageButton } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder } from 'discord.js';
 
 export default class PersonalStats {
 	static activitiesStart = {};
@@ -54,15 +54,15 @@ export default class PersonalStats {
 	static startActivity(activity, discordClient, interaction, restarted = false) {
 		const lowerActivity = activity.toLowerCase();
 
-		const row = new MessageActionRow()
+		const row = new ActionRowBuilder()
 			.addComponents(
-				new MessageButton()
+				new ButtonBuilder()
 					.setCustomId(lowerActivity + '-restart')
 					.setLabel('Restart')
 					.setStyle('DANGER'),
 			)
 			.addComponents(
-				new MessageButton()
+				new ButtonBuilder()
 					.setCustomId(lowerActivity + '-end')
 					.setLabel('End ' + activity)
 					.setStyle('PRIMARY'),
