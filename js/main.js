@@ -233,7 +233,9 @@ class PersonalStats {
 			}
 		}
 
-		await AppDataManager.saveObject('personalStats', 'localData', localData);
+		if((new Date()).getSeconds() === 0) {
+			await AppDataManager.saveObject('personalStats', 'localData', localData);
+		}
 	}
 }
 
