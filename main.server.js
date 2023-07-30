@@ -104,7 +104,7 @@ export default class PersonalStats {
 		);
 
 		interaction.reply({
-			content: `Did "${activity}" from ${PersonalStats.activitiesStart[activity].toLocaleTimeString(config.locale)} from ${activityEnd.toLocaleTimeString(config.locale)} !`,
+			content: `Did "${activity}" from ${PersonalStats.activitiesStart[activity].toLocaleTimeString(config.locale)} to ${activityEnd.toLocaleTimeString(config.locale)} !`,
 			ephemeral: true
 		});
 		PersonalStats.activitiesStart[activity] = null;
