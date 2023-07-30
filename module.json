@@ -12,6 +12,7 @@
 		"module": false,
 		"window": false
 	},
+	"server": true,
     "config": {
         "activities": "object"
     }
